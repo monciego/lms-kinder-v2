@@ -25,13 +25,13 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 |
 */
 
-//auth route for all user 
-Route::group(['middleware' => ['auth']], function() { 
+//auth route for all user
+Route::group(['middleware' => ['auth']], function() {
     Route::get('/dashboard', 'App\Http\Controllers\DashboardController@index')->name('dashboard');
 });
 
 // for admin
-Route::group(['middleware' => ['auth' , 'role:admin']], function() { 
+Route::group(['middleware' => ['auth' , 'role:admin']], function() {
     Route::get('subjects/{id}', 'App\Http\Controllers\DashboardController@showSubject')->name('show-subjects');
     Route::get('edit-subjects/{id}', 'App\Http\Controllers\DashboardController@editSubject')->name('edit-subjects');
     Route::post('update-subjects/{id}', 'App\Http\Controllers\DashboardController@updateSubject')->name('update-subjects');
@@ -39,12 +39,12 @@ Route::group(['middleware' => ['auth' , 'role:admin']], function() {
 });
 
 // for admin and teacher
-Route::group(['middleware' => ['auth' , 'role:admin|teacher']], function() { 
+Route::group(['middleware' => ['auth' , 'role:admin|teacher']], function() {
     Route::resource('accounts', AccountController::class);
 });
 
 // for teachers
-Route::group(['middleware' => ['auth', 'role:teacher|student']], function() { 
+Route::group(['middleware' => ['auth', 'role:teacher|student']], function() {
     Route::get('/activities/quizzes/show-math-problem', 'App\Http\Controllers\QuizController@showMathProblem')->name('show-math-problem');
     Route::get('/activities/quizzes/show-color', 'App\Http\Controllers\QuizController@showColor')->name('show-color');
     Route::get('/activities/quizzes/show-quiz-responses/answers/{id}/{quiz_id}', 'App\Http\Controllers\QuizController@showQuizResponseAnswers')->name('show-quiz-response-answers');
@@ -73,7 +73,7 @@ Route::group(['middleware' => ['auth', 'role:teacher|student']], function() {
     Route::resource('activities/shapes', ShapeController::class);
     Route::resource('activities', ActivityController::class);
     Route::resource('grade', GradeController::class);
-    
+
     // new routes for redefense
     Route::get('student-progress/{id}', 'App\Http\Controllers\AccountController@studentProgress')->name('student-progress');
     Route::get('show-examinations/{id}', 'App\Http\Controllers\QuizController@showExaminations')->name('show-examinations');
@@ -82,10 +82,16 @@ Route::group(['middleware' => ['auth', 'role:teacher|student']], function() {
     Route::get('act/{id}', 'App\Http\Controllers\DashboardController@showAct')->name('show-act');
     Route::get('activities/create/{id}', 'App\Http\Controllers\ActivitiesController@create')->name('activities.create');
     Route::resource('activites', ActivitiesController::class)->only('index', 'show', 'store', 'edit', 'update', 'destroy');
+
+    // generat pdf
+    Route::get("/students-grade/pdf", [GradeController::class, 'viewPDF'])
+    ->name('view-report');
+        Route::get("/generat-pdf", [GradeController::class, 'downloadPDF'])
+    ->name('generate-pdf');
 });
 
 // for student
-Route::group(['middleware' => ['auth', 'role:student']], function() { 
+Route::group(['middleware' => ['auth', 'role:student']], function() {
     Route::get('/dashboard/myprofile', 'App\Http\Controllers\DashboardController@myprofile')->name('dashboard.myprofile');
     Route::resource('parent-information', ParentInformationController::class);
 });

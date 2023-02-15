@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\Builder;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+
 
 
 class GradeController extends Controller
@@ -23,8 +26,8 @@ class GradeController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   
-        if(Auth::user()->hasRole('teacher')) { 
+    {
+        if(Auth::user()->hasRole('teacher')) {
             $grade = User::findOrFail(Auth::id());
             $grade_level  = $grade->grade;
             $students_grades = Grade::with([
@@ -33,11 +36,40 @@ class GradeController extends Controller
                 }
             ])->get();
             return view('grade', ['students_grades'=>$students_grades] );
-        } 
-        else { 
+        }
+        else {
             $students_grades = Grade::where('user_id', Auth::id())->with('user')->get();
             return view('grade', ['students_grades'=>$students_grades] );
         }
+    }
+
+      public function viewPDF()
+    {
+            $grade = User::findOrFail(Auth::id());
+            $grade_level  = $grade->grade;
+            $students_grades = Grade::with([
+                'user' => function ($q) use ($grade_level) {
+                    $q->where('grade', $grade_level);
+                }
+            ])->get();
+            // dd($students_grades);
+        return view('view-pdf', compact('students_grades'));
+    }
+
+
+    public function downloadPDF()
+    {
+
+         $grade = User::findOrFail(Auth::id());
+            $grade_level  = $grade->grade;
+            $students_grades = Grade::with([
+                'user' => function ($q) use ($grade_level) {
+                    $q->where('grade', $grade_level);
+                }
+            ])->get();
+        $pdf = Pdf::loadView('view-pdf', compact('students_grades'))->setOptions(['defaultFont' => 'sans-serif']);;
+        return $pdf->download('grade.pdf');
+        // return view('admin.reports.index', compact('scholars', 'sch'))->with('scholars' , $scholars);
     }
 
     /**
@@ -81,17 +113,17 @@ class GradeController extends Controller
     public function edit($id)
     {
         $grade = Grade::find($id);
-        
+
         if ($grade) {
-            return response()->json([ 
-                'status'=>200, 
+            return response()->json([
+                'status'=>200,
                 'grade'=>$grade,
             ]);
         }
-        else { 
-            return response()->json([ 
-                'status'=>404, 
-                'grade'=>$grade, 
+        else {
+            return response()->json([
+                'status'=>404,
+                'grade'=>$grade,
                 'id'=>$id,
                 'message'=>'Grade Not Found',
             ]);
@@ -112,21 +144,21 @@ class GradeController extends Controller
         ]);
 
         if ($validator->fails()) {
-        
+
             return response()->json([
-                'status'=>400, 
+                'status'=>400,
                 'errors'=>$validator->messages(),
             ]);
-            
+
         }
-        else { 
-                        
+        else {
+
             $grade = Grade::find($id);
-            $grade->grade = $request->input('grade');             
+            $grade->grade = $request->input('grade');
             $grade->save();
-            
-            return response()->json([ 
-                'status'=>200, 
+
+            return response()->json([
+                'status'=>200,
                 'message'=>'Grade Updated Successfully',
             ]);
         }
